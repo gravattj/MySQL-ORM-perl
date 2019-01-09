@@ -24,6 +24,7 @@ WriteMakefile(
 		'SQL::Abstract::Complete' => 0,
 		'Text::Trim'              => 0,
 		'Perl::Tidy::Sweetened'   => 0,
+		'Module::Refresh' => 0,
 	},
 	EXE_FILES => ['bin/mysql-orm.pl'],
 	dist      => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
