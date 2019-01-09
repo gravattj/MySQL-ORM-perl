@@ -1,0 +1,40 @@
+#
+# ansible
+#
+hosts
+host_vars/
+
+#
+# eclipse
+#
+.project
+.includepath
+
+#
+# misc
+#
+nohup.out
+tmp/
+
+#
+# perl
+#
+pm_to_blib
+blib/
+MYMETA.*
+MANIFEST
+Makefile
+Makefile.old
+cover_db
+
+#
+# wildcard file types
+#
+*.swp
+*.gz
+*.ERR
+*.retry
+*.bak
+*.zip
+
+
