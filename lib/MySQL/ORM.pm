@@ -9,7 +9,7 @@ use Data::Printer alias => 'pdump';
 use SQL::Abstract::Complete;
 use MySQL::Util::Lite;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -226,9 +226,10 @@ method upsert (Str     :$table!,
 	}
 	else {
 
-		my $autoinc_col = $self->_get_autoinc_col( table => $table );
+		my $autoinc_col = $self->MySQL::ORM::_get_autoinc_col($table);
+		
 		if ( defined $autoinc_col ) {
-			my $href = $self->select_one( table => $table, where => $values );
+			my $href = $self->MySQL::ORM::select_one( table => $table, where => $values );
 			return $href->{$autoinc_col};
 		}
 		else {
@@ -255,7 +256,7 @@ method insert (Str     :$table,
 		confess "should have received 1, but got $rows"
 		  if $rows != 1;
 
-		if ( $self->_is_pk_autoinc($table) ) {
+		if ($self->MySQL::ORM::_is_pk_autoinc($table) ) {
 			my $id = $self->dbh->{mysql_insertid};
 			return $id;
 		}
