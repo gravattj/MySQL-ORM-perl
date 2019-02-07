@@ -33,6 +33,7 @@ else {
 	check();
 	done_testing();
 	drop_db();
+	remove_tmp();
 }
 
 ##################################

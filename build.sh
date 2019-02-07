@@ -6,6 +6,7 @@ fi
 
 rm -f *.gz 
 rm -f MANIFEST MANIFEST.old
+rm -rf tmp
 
 perl Makefile.PL && \
 make && \
