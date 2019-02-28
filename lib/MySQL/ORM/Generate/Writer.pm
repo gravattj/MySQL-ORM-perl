@@ -168,13 +168,14 @@ method write_class (
 ##############################################################################
 
 method _tidy (Str $file_name) {
-
-	system("perltidier -b -bext='/' $file_name");
+	
+	my $cmd = "perltidier -b -bext='/' $file_name 2>&1 | grep -v Subroutine";
+	pdump $cmd;
+	system($cmd);
 	return;
 		
-	local @ARGV = ('-b', "-bext='/'", $file_name);
-	
-	Perl::Tidy::Sweetened::perltidy();
+	#local @ARGV = ('-b', "-bext='/'", $file_name);
+	#Perl::Tidy::Sweetened::perltidy();
 }
 
 #method _tidy (Str $file_name) {
