@@ -40,7 +40,7 @@ else {
 
 sub check {
 
-	use_ok("Foo::Testmysqlorm") || print "Bail out!\n";
+	use_ok("Foo::Testmysqlorm") || BAIL_OUT("failed to use module");
 	
 	my $dbh = get_dbh();
 	my $orm;
