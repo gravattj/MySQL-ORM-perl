@@ -378,7 +378,7 @@ method _sort_sig (ArrayRef :$sig!) {
 	#   Num|HashRef|Undef :$foo_id,
     #   Num|HashRef       :$foo_id,
    	
-   	sub by_param {
+   	sub _by_param {
    	    $a =~ /:\$(\w+)/;
    	    my $left_param = $1;
    	    
@@ -388,7 +388,7 @@ method _sort_sig (ArrayRef :$sig!) {
    	    $left_param cmp $right_param;
    	}
    	
-   	@$sig = sort by_param @$sig;
+   	@$sig = sort _by_param @$sig;
    	
    	return @$sig;
 }
