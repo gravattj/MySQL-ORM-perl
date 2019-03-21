@@ -31,6 +31,7 @@ else {
 	load_db();
 	generate();
 	check();
+	check_double_uniq();
 	done_testing();
 	drop_db();
 	remove_tmp();
@@ -111,6 +112,32 @@ sub check {
 	
 	@rows = $team->select;
 	ok(!@rows);
+}
+
+sub check_double_uniq {
+	
+	my $dbh = get_dbh();
+	my $orm = Foo::Testmysqlorm->new(dbh => $dbh);
+
+	#
+	# happy path
+	#
+	eval { $orm->DoubleUniq->insert(code => 'foo', name => 'bar'); };
+	ok(!$@);
+		
+	#
+	# missing required columns
+	#	
+	eval { $orm->DoubleUniq->insert(); };
+	ok($@);
+	ok($@ =~ /missing required argument/);
+		
+	#
+	# missing 1/2 req columns
+	#
+	eval {$orm->DoubleUniq->insert(code => 'biz');};
+	ok($@);	
+	ok($@ =~ /missing required argument/);
 }
 
 sub get_random_owner_id {

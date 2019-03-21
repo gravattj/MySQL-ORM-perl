@@ -1,5 +1,8 @@
 Revision history for MySQL-ORM
 
+0.07	- squelched perltidy noise
+		- made uniq columns as required in insert methods
+		
 0.06 	Update by_param to private _by_param
 
 0.05	fixed signatures for nullable foreign keys in the selectx methods

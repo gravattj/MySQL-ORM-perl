@@ -313,7 +313,8 @@ method _get_method_insert {
 
 	return $self->method_maker->make_method(
 		name => 'insert',
-		sig  => $self->_get_method_sig( exclude_autoinc => 1 ),
+		sig =>
+		  $self->_get_method_sig( exclude_autoinc => 1, want_req_columns => 1 ),
 		body => $body
 	);
 }
@@ -342,55 +343,55 @@ method _get_method_selectx_one {
 
 method _merge_sig_types (ArrayRef :$sig!) {
 
-	# for cases where you have nullable foreign keys in one table, but they 
+	# for cases where you have nullable foreign keys in one table, but they
 	# are required fields in the parent table
-	
+
 	# example:
 	#   Num|HashRef|Undef :$foo_id,
-    #   Num|HashRef       :$foo_id,
-   	
-   	my %cols;
-   	 
+	#   Num|HashRef       :$foo_id,
+
+	my %cols;
+
 	foreach my $param (@$sig) {
 		$param = trim $param;
-		my ($type, $colname) = split(/\s+/, $param);	
-		
-		my @types = split(/\|/, $type);	
+		my ( $type, $colname ) = split( /\s+/, $param );
+
+		my @types = split( /\|/, $type );
 		push @{ $cols{$colname} }, @types;
-	}		
-	
+	}
+
 	my @sig;
-		
-	foreach my $col (sort keys %cols) {
-		my @types = @{ $cols{$col} };
-		my @uniq_types = uniq @types;		
-		push @sig, sprintf("    %s %s", join('|', sort @uniq_types), $col);
-	}	
-	
+
+	foreach my $col ( sort keys %cols ) {
+		my @types      = @{ $cols{$col} };
+		my @uniq_types = uniq @types;
+		push @sig, sprintf( "    %s %s", join( '|', sort @uniq_types ), $col );
+	}
+
 	return @sig;
 }
 
 method _sort_sig (ArrayRef :$sig!) {
 
 	# sort signature
-	
+
 	# example:
 	#   Num|HashRef|Undef :$foo_id,
-    #   Num|HashRef       :$foo_id,
-   	
-   	sub _by_param {
-   	    $a =~ /:\$(\w+)/;
-   	    my $left_param = $1;
-   	    
-   	    $b =~ /:\$(\w+)/;
-   	    my $right_param = $1;
-   	    
-   	    $left_param cmp $right_param;
-   	}
-   	
-   	@$sig = sort _by_param @$sig;
-   	
-   	return @$sig;
+	#   Num|HashRef       :$foo_id,
+
+	sub _by_param {
+		$a =~ /:\$(\w+)/;
+		my $left_param = $1;
+
+		$b =~ /:\$(\w+)/;
+		my $right_param = $1;
+
+		$left_param cmp $right_param;
+	}
+
+	@$sig = sort _by_param @$sig;
+
+	return @$sig;
 }
 
 method _get_method_sigx (Bool :$exclude_autoinc = 0,
@@ -410,9 +411,9 @@ method _get_method_sigx (Bool :$exclude_autoinc = 0,
 	}
 
 	@sig = uniq @sig;
-	@sig = $self->_merge_sig_types(sig => \@sig);
-	@sig = $self->_sort_sig(sig => \@sig);
-	
+	@sig = $self->_merge_sig_types( sig => \@sig );
+	@sig = $self->_sort_sig( sig => \@sig );
+
 	my $left_join = sprintf '    %s :%s%s', 'Bool', '$', 'left_join';
 	push @sig, $left_join;
 
@@ -431,12 +432,14 @@ method _get_table2alias_map {
 	my %map;
 
 	$map{ $self->table->get_fq_name } = 't' . $num;
+
 	#$map{ $self->table->name } = 't' . $num;
 	$num++;
 
 	foreach my $t ( $self->table->get_parent_tables ) {
 
 		$map{ $t->get_fq_name } = 't' . $num;
+
 		#$map{ $t->name } = 't' . $num;
 
 		$num++;
@@ -464,28 +467,29 @@ method _get_method_selectx {
 	foreach my $t ( $self->table->get_parent_tables ) {
 		foreach my $c ( $t->get_columns ) {
 			if ( !$arg2table{ $c->name } ) {
-				push @select, sprintf("%s.%s", $table2alias{$t->get_fq_name}, $c->name);
+				push @select,
+				  sprintf( "%s.%s", $table2alias{ $t->get_fq_name }, $c->name );
 				$arg2table{ $c->name } = $t->get_fq_name;
 			}
 		}
 	}
 
 	my @from = ( sprintf( '%s %s', $self->table->get_fq_name, 't1' ) );
+
 	#my @from = ( sprintf( '%s %s', $self->table->name, 't1' ) );
 
 	foreach my $fk ( $self->table->get_foreign_keys ) {
 		foreach my $con ( $fk->get_column_constraints ) {
-		    
-		    my $con_parent_fq = $con->parent_schema_name . "." .$con->parent_table_name;
+
+			my $con_parent_fq =
+			  $con->parent_schema_name . "." . $con->parent_table_name;
 
 			push @from, 'left join';
 			push @from,
 			  sprintf(
 				"%s %s on (t1.%s = %s.%s)",
-				$con_parent_fq,
-				$table2alias{ $con_parent_fq },
-				$con->column_name,
-				$table2alias{ $con_parent_fq },
+				$con_parent_fq,    $table2alias{$con_parent_fq},
+				$con->column_name, $table2alias{$con_parent_fq},
 				$con->parent_column_name,
 			  );
 		}
@@ -628,10 +632,13 @@ method _get_method_get_id {
 	return '';
 }
 
-method _get_method_sig_array (ArrayRef :$columns = [],
-					     	  Bool :$exclude_autoinc = 0, 
-						 	  Bool :$want_order_by = 0,
-						 	  MySQL::Util::Lite::Table :$table) {
+method _get_method_sig_array (				  
+	                ArrayRef :$columns = [],
+			            Bool :$exclude_autoinc = 0, 
+	  				    Bool :$want_order_by = 0,
+	  				    Bool :$want_req_columns = 0,
+	MySQL::Util::Lite::Table :$table
+) {
 
 	if ( !$table ) {
 		$table = $self->table;
@@ -650,15 +657,28 @@ method _get_method_sig_array (ArrayRef :$columns = [],
 		}
 	}
 
+	my %req_cols;
+	if ($want_req_columns) {
+		%req_cols = $self->_get_required_columns( table => $table );
+	}
+
 	my @sig;
 	foreach my $col (@$columns) {
 
-		my $line = sprintf '    %s :%s%s', $col->get_moose_type, '$',
-		  $col->name;
+		my $required = '';
+		if ($want_req_columns) {
+			if ( $req_cols{ $col->name } ) {
+				$required = '!';
+			}
+		}
+
+		my $line = sprintf '    %s :%s%s%s', $col->get_moose_type, '$',
+		  $col->name, $required;
+
 		push @sig, $line;
 	}
-	
-	@sig = $self->_sort_sig(sig => \@sig);
+
+	@sig = $self->_sort_sig( sig => \@sig );
 
 	if ($want_order_by) {
 		my $line = sprintf '    %s :%s%s', 'ArrayRef', '$', 'order_by';
@@ -668,9 +688,32 @@ method _get_method_sig_array (ArrayRef :$columns = [],
 	return @sig;
 }
 
+method _get_required_columns (MySQL::Util::Lite::Table :$table) {
+
+	my %cols;
+	my @keys;
+	my $pk = $table->get_primary_key;
+	push @keys, $pk if $pk;
+	push @keys, $table->get_alternate_keys;
+
+	foreach my $key (@keys) {
+		foreach my $col ( @{ $key->columns } ) {
+			if ( !$col->is_autoinc ) {
+				if ( !defined $col->default ) { # hard to imagine a use case for this
+					$cols{ $col->name } = 1;
+				}
+			}
+		}
+	}
+
+	return %cols;
+}
+
 method _get_method_sig ( ArrayRef :$columns = [],
 					     Bool :$exclude_autoinc = 0, 
-						 Bool :$want_order_by = 0) {
+						 Bool :$want_order_by = 0,
+						 Bool :$want_req_columns = 0,
+						 ) {
 
 	return join( ",\n", $self->_get_method_sig_array(@_) );
 }
