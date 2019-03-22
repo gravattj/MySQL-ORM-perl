@@ -314,7 +314,7 @@ method _get_method_insert {
 	return $self->method_maker->make_method(
 		name => 'insert',
 		sig =>
-		  $self->_get_method_sig( exclude_autoinc => 1, want_req_columns => 1 ),
+		  $self->_get_method_sig( exclude_autoinc => 1 ),
 		body => $body
 	);
 }
@@ -638,7 +638,6 @@ method _get_method_sig_array (
 	                ArrayRef :$columns = [],
 			            Bool :$exclude_autoinc = 0, 
 	  				    Bool :$want_order_by = 0,
-	  				    Bool :$want_req_columns = 0,
 	MySQL::Util::Lite::Table :$table
 ) {
 	
@@ -659,23 +658,11 @@ method _get_method_sig_array (
 		}
 	}
 
-	my %req_cols;
-	if ($want_req_columns) {
-		%req_cols = $self->_get_required_columns( table => $table );
-	}
-
 	my @sig;
 	foreach my $col (@$columns) {
 
-		my $required = '';
-		if ($want_req_columns) {
-			if ( $req_cols{ $col->name } ) {
-				$required = '!';
-			}
-		}
-
-		my $line = sprintf '    %s :%s%s%s', $col->get_moose_type, '$',
-		  $col->name, $required;
+		my $line = sprintf '    %s :%s%s', $col->get_moose_type, '$',
+		  $col->name;
 
 		push @sig, $line;
 	}
@@ -690,31 +677,9 @@ method _get_method_sig_array (
 	return @sig;
 }
 
-method _get_required_columns (MySQL::Util::Lite::Table :$table) {
-
-	my %cols;
-	my @keys;
-	my $pk = $table->get_primary_key;
-	push @keys, $pk if $pk;
-	push @keys, $table->get_alternate_keys;
-
-	foreach my $key (@keys) {
-		foreach my $col ( @{ $key->columns } ) {
-			if ( !$col->is_autoinc ) {
-				if ( !defined $col->default ) {
-					$cols{ $col->name } = 1;
-				}
-			}
-		}
-	}
-
-	return %cols;
-}
-
 method _get_method_sig ( ArrayRef :$columns = [],
 					     Bool :$exclude_autoinc = 0, 
 						 Bool :$want_order_by = 0,
-						 Bool :$want_req_columns = 0,
 						 ) {
 
 	return join( ",\n", $self->_get_method_sig_array(@_) );
