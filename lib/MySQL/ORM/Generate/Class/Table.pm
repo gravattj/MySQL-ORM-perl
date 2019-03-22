@@ -581,6 +581,8 @@ method _get_method_get_id {
 		my ($pk_col) = $pk->get_columns;
 		if ( $pk_col->name =~ /id$/ ) {
 
+			my @ak_cols;
+
 			foreach my $ak ( $self->table->get_alternate_keys ) {
 
 				my %ak_cols;
@@ -588,17 +590,19 @@ method _get_method_get_id {
 					$ak_cols{ $ak_col->name } = $ak_col;
 				}
 
-				my @ak_cols;
 				foreach my $col_name ( keys %ak_cols ) {
 					push @ak_cols, $ak_cols{$col_name};
 				}
+			}
+			
+			@ak_cols = uniq @ak_cols;
+			
+			my $sig = $self->_get_method_sig(
+				columns         => \@ak_cols,
+				exclude_autoinc => 1
+			);
 
-				my $sig = $self->_get_method_sig(
-					columns         => \@ak_cols,
-					exclude_autoinc => 1
-				);
-
-				my $body .= q{
+			my $body .= q{
 				    	my %a = @_;
 				    	my %where;
 				
@@ -612,20 +616,18 @@ method _get_method_get_id {
 				    	);
 				    	
 					};
-				$body .= 'if (@$rows == 1) {' . "\n";
-				$body .= '   my $row = shift @$rows;' . "\n";
-				$body .= sprintf 'return $row->{%s};%s', $pk_col->name, "\n";
-				$body .= "}\n\n";
-				$body .=
-				  'confess "too many rows returned" if @$rows > 1;' . "\n\n";
-				$body .= 'return;';
+			$body .= 'if (@$rows == 1) {' . "\n";
+			$body .= '   my $row = shift @$rows;' . "\n";
+			$body .= sprintf 'return $row->{%s};%s', $pk_col->name, "\n";
+			$body .= "}\n\n";
+			$body .= 'confess "too many rows returned" if @$rows > 1;' . "\n\n";
+			$body .= 'return;';
 
-				return $self->method_maker->make_method(
-					name => 'get_id',
-					sig  => $sig,
-					body => $body
-				);
-			}
+			return $self->method_maker->make_method(
+				name => 'get_id',
+				sig  => $sig,
+				body => $body
+			);
 		}
 	}
 
@@ -639,7 +641,7 @@ method _get_method_sig_array (
 	  				    Bool :$want_req_columns = 0,
 	MySQL::Util::Lite::Table :$table
 ) {
-
+	
 	if ( !$table ) {
 		$table = $self->table;
 	}
@@ -684,7 +686,7 @@ method _get_method_sig_array (
 		my $line = sprintf '    %s :%s%s', 'ArrayRef', '$', 'order_by';
 		push @sig, $line;
 	}
-
+	
 	return @sig;
 }
 
@@ -699,7 +701,7 @@ method _get_required_columns (MySQL::Util::Lite::Table :$table) {
 	foreach my $key (@keys) {
 		foreach my $col ( @{ $key->columns } ) {
 			if ( !$col->is_autoinc ) {
-				if ( !defined $col->default ) { # hard to imagine a use case for this
+				if ( !defined $col->default ) {
 					$cols{ $col->name } = 1;
 				}
 			}
