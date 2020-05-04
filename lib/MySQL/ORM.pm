@@ -9,7 +9,7 @@ use Data::Printer alias => 'pdump';
 use SQL::Abstract::Complete;
 use MySQL::Util::Lite;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 =head1 SYNOPSIS
 
@@ -60,6 +60,11 @@ has __lite => (
 ##############################################################################
 ## private attributes
 ##############################################################################
+has _lite_ready => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0
+);
 
 has _schema => (
 	is      => 'rw',
@@ -374,7 +379,21 @@ method _build__lite {
 	my $clone = $self->dbh->clone;
 	$clone->do("use $schema");
 	
+	$self->_lite_ready(1);
+	
 	return MySQL::Util::Lite->new( dbh => $clone, span => 1 );
+}
+
+sub DESTROY {
+    my $self = shift;
+    
+    #
+    # Should disconnect our dbh clone if we created one.
+    # Otherwise, we might get annoying warning messages
+    #
+    if( $self->_lite_ready ){
+        $self->__lite->dbh->disconnect()   
+    }
 }
 
 1;

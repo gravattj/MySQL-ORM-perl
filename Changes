@@ -1,5 +1,9 @@
 Revision history for MySQL-ORM
 
+0.13    - Added dbh clone disconnect on destroy logic to avoid warning messages
+          if the clone was created while autocommit was off or a transaction
+          was open.
+
 0.12	- added an additional primary key check to avoid errors when primary 
 		  key does not exist.
 	 	  
