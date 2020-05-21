@@ -9,7 +9,7 @@ use Data::Printer alias => 'pdump';
 use SQL::Abstract::Complete;
 use MySQL::Util::Lite;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 =head1 SYNOPSIS
 
@@ -94,6 +94,17 @@ has _prune_ddl => (
 # public methods
 ##############################################################################
 
+method begin_work(){
+    $self->dbh->begin_work;
+}
+
+method rollback(){
+    $self->dbh->rollback;   
+}
+
+method commit(){
+    $self->dbh->commit;   
+}
 
 =head1 SUBROUTINES/METHODS
 
