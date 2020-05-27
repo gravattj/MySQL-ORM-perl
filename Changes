@@ -7,6 +7,7 @@ Revision history for MySQL-ORM
         - Fixed selectx method generation to handle self referencing tables.
           Current solution was to not support selectx fetching the parent table
           attributes when the parent table == current table.
+        - Better handling of dbh clone
 
 0.14    - Added dbh clone disconnect on destroy logic to avoid warning messages
           if the clone was created while autocommit was off or a transaction

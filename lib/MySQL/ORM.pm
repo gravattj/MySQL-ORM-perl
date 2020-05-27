@@ -63,7 +63,8 @@ has __lite => (
 has _lite_ready => (
     is      => 'rw',
     isa     => 'Bool',
-    default => 0
+    default => 0,
+    init_arg => '_hide'
 );
 
 has _schema => (
@@ -388,24 +389,12 @@ method _build_schema_name {
 method _build__lite {
 	
 	my $schema = $self->schema_name;
-	my $clone = $self->dbh->clone;
+	my $clone = $self->dbh->clone( { InactiveDestroy => 1, ReadOnly => 1 } );
 	$clone->do("use $schema");
 	
 	$self->_lite_ready(1);
 	
 	return MySQL::Util::Lite->new( dbh => $clone, span => 1 );
-}
-
-sub DESTROY {
-    my $self = shift;
-    
-    #
-    # Should disconnect our dbh clone if we created one.
-    # Otherwise, we might get annoying warning messages
-    #
-    if( $self->_lite_ready ){
-        $self->__lite->dbh->disconnect()   
-    }
 }
 
 1;
