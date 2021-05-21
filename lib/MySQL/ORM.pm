@@ -87,6 +87,7 @@ has _prune_ddl => (
 			distinct  => 1,
 			left_join => 1,
 			order_by  => 1,
+			limit     => 1
 		};
 	}
 );

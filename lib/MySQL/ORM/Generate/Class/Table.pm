@@ -454,7 +454,8 @@ method _sort_sig (ArrayRef :$sig!) {
 }
 
 method _get_method_sigx (Bool :$exclude_autoinc = 0,
-						 Bool :$want_order_by = 0) {
+						 Bool :$want_order_by = 0,
+						 Bool :$want_limit = 0) {
 
 	my @sig = $self->_get_method_sig_array(
 		exclude_autoinc => $exclude_autoinc,
@@ -480,6 +481,11 @@ method _get_method_sigx (Bool :$exclude_autoinc = 0,
 		my $line = sprintf '    %s :%s%s', 'ArrayRef', '$', 'order_by';
 		push @sig, $line;
 	}
+	
+	if($want_limit) {
+        my $line = sprintf '    %s :%s%s', 'Num|Undef', '$', 'limit';
+        push @sig, $line;
+    }
 
 	return join( ",\n", @sig );
 }
@@ -616,6 +622,10 @@ method _get_method_selectx {
 				}
 				$sql.= "order by " . join(', ', @order);
 			}
+			
+			if ($limit) {
+			    $sql.=" limit $limit";
+			}
 		
 			my $sth = $self->dbh->prepare($sql);
 			$sth->execute(@bind);
@@ -631,7 +641,7 @@ method _get_method_selectx {
 
 	return $self->method_maker->make_method(
 		name => 'selectx',
-		sig  => $self->_get_method_sigx( want_order_by => 1 ),
+		sig  => $self->_get_method_sigx( want_order_by => 1, want_limit => 1 ),
 		body => join( "\n", @body )
 	);
 }
